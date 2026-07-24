@@ -124,7 +124,8 @@ function bindCardEvents(scope){
 
 function renderGrid(){
   const items = getFiltered();
-  sectionTitle.textContent = state.category==="Semua" ? "Semua Mod" : state.category==="Pilihan" ? "Mod Trending" : state.category;
+  sectionTitle.textContent = state.category==="Semua" ? "Semua Mod" :
+                              state.category==="Pilihan" ? "Mod Trending" : state.category;
   resultCount.textContent = items.length + " mod";
   if(items.length===0){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="glyph">🔍</div>Tidak ada mod yang cocok. Coba kata kunci lain.</div>`;
@@ -320,7 +321,11 @@ document.addEventListener('keydown', (e)=>{
   if(e.key==='Escape'){ closeDrawer(); closeModal(); }
 });
 
-// ---- init tampilan toko ----
-renderChips();
-renderGrid();
-updateCartUI();
+// ---- init ----
+async function init(){
+  await loadProducts();
+  renderChips();
+  renderGrid();
+  updateCartUI();
+}
+init();
