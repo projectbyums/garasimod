@@ -1,67 +1,42 @@
 // ============================================================
-// admin.js — Logika dashboard admin: form tambah produk,
-// daftar produk (edit & hapus), serta export/import data.
+// admin.js — Logika dashboard admin
 // ============================================================
 
 const EMOJI_OPTIONS = ["🚌","🚍","🚎","🚚","🛻","🔊","📯","🗺️","🧭","🖼️","🎨","📐","🏮","⚙️","🛞","💡"];
 let selectedEmoji = EMOJI_OPTIONS[0];
+let editSelectedEmoji = EMOJI_OPTIONS[0];
 let photoUrls = [];
+let editPhotoUrls = [];
+let editingProductId = null;
 
-// ---- state edit ----
-let editingId = null; // null = mode tambah, number = mode edit
-
-// ============================================================
-// FOTO URL INPUTS (dipakai form tambah & modal edit)
-// ============================================================
-function buildPhotoInputsHTML(urls){
-  if(urls.length === 0) return `<div class="photo-empty-hint">Belum ada foto. Klik "+ Tambah Foto" untuk menambahkan URL gambar.</div>`;
-  return urls.map((url, i) => `
+// ---- FOTO INPUT (form tambah) ----
+function renderPhotoInputs(){
+  const container = document.getElementById('photoUrlList');
+  container.innerHTML = photoUrls.map((url, i) => `
     <div class="photo-url-row" data-index="${i}">
       <div class="photo-preview-wrap ${url ? '' : ''}">
-        ${url
-          ? `<img src="${url}" class="photo-thumb" alt="preview" onerror="this.src=''; this.parentElement.classList.add('broken')">`
-          : `<div class="photo-thumb-empty">🖼️</div>`}
+        ${url ? `<img src="${url}" class="photo-thumb" alt="preview" onerror="this.parentElement.classList.add('broken')">` : `<div class="photo-thumb-empty">🖼️</div>`}
       </div>
       <input type="text" class="photo-url-input" placeholder="https://i.imgur.com/contoh.jpg" value="${url}" data-idx="${i}"/>
-      <button type="button" class="photo-del-btn" data-del="${i}" aria-label="Hapus foto">
+      <button type="button" class="photo-del-btn" data-del="${i}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
   `).join('');
-}
-
-function bindPhotoInputs(container, urlsRef, onUpdate){
   container.querySelectorAll('.photo-url-input').forEach(input => {
     input.addEventListener('input', (e) => {
       const idx = Number(e.target.dataset.idx);
-      urlsRef[idx] = e.target.value.trim();
-      const row = container.querySelector(`[data-index="${idx}"]`);
-      const wrap = row.querySelector('.photo-preview-wrap');
-      const url = urlsRef[idx];
+      photoUrls[idx] = e.target.value.trim();
+      const wrap = container.querySelector(`[data-index="${idx}"] .photo-preview-wrap`);
       wrap.classList.remove('broken');
-      wrap.innerHTML = url
-        ? `<img src="${url}" class="photo-thumb" alt="preview" onerror="this.src=''; this.parentElement.classList.add('broken')">`
+      wrap.innerHTML = photoUrls[idx]
+        ? `<img src="${photoUrls[idx]}" class="photo-thumb" onerror="this.parentElement.classList.add('broken')">`
         : `<div class="photo-thumb-empty">🖼️</div>`;
-      if(onUpdate) onUpdate();
     });
   });
   container.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      urlsRef.splice(Number(btn.dataset.del), 1);
-      container.innerHTML = buildPhotoInputsHTML(urlsRef);
-      bindPhotoInputs(container, urlsRef, onUpdate);
-      if(onUpdate) onUpdate();
-    });
+    btn.addEventListener('click', () => { photoUrls.splice(Number(btn.dataset.del), 1); renderPhotoInputs(); });
   });
-}
-
-// ============================================================
-// FORM TAMBAH PRODUK
-// ============================================================
-function renderPhotoInputs(){
-  const container = document.getElementById('photoUrlList');
-  container.innerHTML = buildPhotoInputsHTML(photoUrls);
-  bindPhotoInputs(container, photoUrls, null);
 }
 
 document.getElementById('addPhotoBtn').addEventListener('click', () => {
@@ -70,29 +45,131 @@ document.getElementById('addPhotoBtn').addEventListener('click', () => {
   renderPhotoInputs();
 });
 
+// ---- FOTO INPUT (form edit) ----
+function renderEditPhotoInputs(){
+  const container = document.getElementById('e-photoUrlList');
+  container.innerHTML = editPhotoUrls.map((url, i) => `
+    <div class="photo-url-row" data-index="${i}">
+      <div class="photo-preview-wrap">
+        ${url ? `<img src="${url}" class="photo-thumb" alt="preview" onerror="this.parentElement.classList.add('broken')">` : `<div class="photo-thumb-empty">🖼️</div>`}
+      </div>
+      <input type="text" class="photo-url-input" placeholder="https://i.imgur.com/contoh.jpg" value="${url}" data-idx="${i}"/>
+      <button type="button" class="photo-del-btn" data-del="${i}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+  container.querySelectorAll('.photo-url-input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const idx = Number(e.target.dataset.idx);
+      editPhotoUrls[idx] = e.target.value.trim();
+      const wrap = container.querySelector(`[data-index="${idx}"] .photo-preview-wrap`);
+      wrap.classList.remove('broken');
+      wrap.innerHTML = editPhotoUrls[idx]
+        ? `<img src="${editPhotoUrls[idx]}" class="photo-thumb" onerror="this.parentElement.classList.add('broken')">`
+        : `<div class="photo-thumb-empty">🖼️</div>`;
+    });
+  });
+  container.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => { editPhotoUrls.splice(Number(btn.dataset.del), 1); renderEditPhotoInputs(); });
+  });
+}
+
+document.getElementById('e-addPhotoBtn').addEventListener('click', () => {
+  if(editPhotoUrls.length >= 8){ showToast("Maksimal 8 foto per produk"); return; }
+  editPhotoUrls.push('');
+  renderEditPhotoInputs();
+});
+
+// ---- EMOJI PICKER ----
 function renderEmojiPicker(){
   const picker = document.getElementById('emojiPicker');
-  picker.innerHTML = EMOJI_OPTIONS.map(em=>
+  picker.innerHTML = EMOJI_OPTIONS.map(em =>
     `<button type="button" class="emoji-opt ${em===selectedEmoji?'selected':''}" data-emoji="${em}">${em}</button>`
   ).join('');
-  picker.querySelectorAll('.emoji-opt').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ selectedEmoji = btn.dataset.emoji; renderEmojiPicker(); });
+  picker.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.addEventListener('click', () => { selectedEmoji = btn.dataset.emoji; renderEmojiPicker(); });
+  });
+}
+
+function renderEditEmojiPicker(){
+  const picker = document.getElementById('e-emojiPicker');
+  picker.innerHTML = EMOJI_OPTIONS.map(em =>
+    `<button type="button" class="emoji-opt ${em===editSelectedEmoji?'selected':''}" data-emoji="${em}">${em}</button>`
+  ).join('');
+  picker.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.addEventListener('click', () => { editSelectedEmoji = btn.dataset.emoji; renderEditEmojiPicker(); });
   });
 }
 
 function renderCategoryOptions(){
-  const sel = document.getElementById('f-category');
-  sel.innerHTML = CATEGORIES.filter(c=>c!=="Semua" && c!=="Pilihan")
-    .map(c=>`<option value="${c}">${c}</option>`).join('');
+  const cats = CATEGORIES.filter(c => c !== "Semua" && c !== "Pilihan");
+  document.getElementById('f-category').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('e-category').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-document.getElementById('productForm').addEventListener('submit', (e)=>{
+// ---- DAFTAR PRODUK ADMIN ----
+function renderAdminProductList(){
+  const list = document.getElementById('adminProductList');
+  document.getElementById('totalProdukCount').textContent = PRODUCTS.length;
+  if(PRODUCTS.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="glyph">📦</div>Belum ada produk. Tambahkan produk pertamamu!</div>`;
+    return;
+  }
+  list.innerHTML = PRODUCTS.map(p => {
+    const fotoCount = (p.images||[]).filter(img => img.url).length;
+    return `
+    <div class="admin-list-item">
+      <div class="ph" style="background:${p.bg}">${p.emoji}</div>
+      <div class="info">
+        <h4>${p.name}</h4>
+        <span>${p.seller} · ${p.category} · ${formatRp(p.price)}</span>
+        ${fotoCount > 0 ? `<span class="foto-count-badge">📷 ${fotoCount} foto</span>` : ''}
+      </div>
+      <div class="admin-item-actions">
+        <button class="edit-btn" data-edit="${p.id}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="del-btn" data-del="${p.id}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          Hapus
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(Number(btn.dataset.edit)));
+  });
+  list.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => confirmDelete(Number(btn.dataset.del)));
+  });
+}
+
+async function confirmDelete(id){
+  const p = PRODUCTS.find(x => x.id === id);
+  if(!confirm(`Hapus "${p.name}" dari toko?`)) return;
+  showToast("Menghapus...");
+  const ok = await deleteProduct(id);
+  if(ok){
+    PRODUCTS = PRODUCTS.filter(x => x.id !== id);
+    renderAdminProductList();
+    renderGrid();
+    showToast("Produk dihapus ✓");
+  } else {
+    showToast("Gagal menghapus, coba lagi");
+  }
+}
+
+// ---- FORM TAMBAH PRODUK ----
+document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const isFree = document.getElementById('f-free').checked;
   const name = document.getElementById('f-name').value.trim();
   const seller = document.getElementById('f-seller').value.trim();
   if(!name || !seller){ showToast("Nama produk & modder wajib diisi"); return; }
 
+  const isFree = document.getElementById('f-free').checked;
   const validPhotos = photoUrls.filter(url => url.trim() !== '');
   const bgColor = document.getElementById('f-color').value;
   const images = validPhotos.length > 0
@@ -100,9 +177,7 @@ document.getElementById('productForm').addEventListener('submit', (e)=>{
     : [{ emoji: selectedEmoji, bg: bgColor }];
 
   const product = {
-    id: Date.now(),
-    name,
-    seller,
+    name, seller,
     category: document.getElementById('f-category').value,
     price: isFree ? 0 : Math.max(0, Number(document.getElementById('f-price').value) || 0),
     rating: Math.min(5, Math.max(0, Number(document.getElementById('f-rating').value) || 0)),
@@ -111,178 +186,88 @@ document.getElementById('productForm').addEventListener('submit', (e)=>{
     bg: bgColor,
     images,
     featured: document.getElementById('f-featured').checked,
-    desc: document.getElementById('f-desc').value.trim() || "Belum ada deskripsi untuk produk ini.",
-    builtIn: false,
+    desc: document.getElementById('f-desc').value.trim() || "Belum ada deskripsi.",
   };
 
-  PRODUCTS.push(product);
-  saveCustomProducts();
-  renderAdminProductList();
-  renderGrid();
-  showToast("Produk berhasil disimpan ✓");
-
-  e.target.reset();
-  document.getElementById('f-free').checked = false;
-  selectedEmoji = EMOJI_OPTIONS[0];
-  photoUrls = [];
-  renderEmojiPicker();
-  renderPhotoInputs();
+  showToast("Menyimpan produk...");
+  const created = await saveProduct(product);
+  if(created){
+    PRODUCTS.unshift(created);
+    renderAdminProductList();
+    renderGrid();
+    showToast("Produk berhasil disimpan ✓");
+    e.target.reset();
+    selectedEmoji = EMOJI_OPTIONS[0];
+    photoUrls = [];
+    renderEmojiPicker();
+    renderPhotoInputs();
+  } else {
+    showToast("Gagal menyimpan, coba lagi");
+  }
 });
 
-document.getElementById('f-free').addEventListener('change', (e)=>{
+document.getElementById('f-free').addEventListener('change', (e) => {
   const priceInput = document.getElementById('f-price');
   priceInput.disabled = e.target.checked;
   if(e.target.checked) priceInput.value = 0;
 });
 
-// ============================================================
-// DAFTAR PRODUK
-// ============================================================
-function renderAdminProductList(){
-  const list = document.getElementById('adminProductList');
-  document.getElementById('totalProdukCount').textContent = PRODUCTS.length;
-  list.innerHTML = PRODUCTS.map(p=>{
-    const fotoCount = (p.images||[]).filter(img=>img.url).length;
-    return `
-    <div class="admin-list-item">
-      <div class="ph" style="background:${p.bg}">${p.emoji}</div>
-      <div class="info">
-        <h4>${p.name}</h4>
-        <span>${p.seller} &middot; ${p.category} &middot; ${formatRp(p.price)}</span>
-        ${fotoCount > 0 ? `<span class="foto-count-badge">📷 ${fotoCount} foto</span>` : '<span class="foto-count-badge" style="color:var(--ink-soft)">Belum ada foto</span>'}
-      </div>
-      <div class="admin-item-actions">
-        <button class="edit-btn" data-edit="${p.id}" title="Edit produk">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
-          Edit
-        </button>
-        <button class="del-btn" data-del="${p.id}" title="Hapus produk">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-          Hapus
-        </button>
-      </div>
-    </div>`;
-  }).join('');
-
-  list.querySelectorAll('[data-edit]').forEach(btn=>{
-    btn.addEventListener('click', ()=> openEditModal(Number(btn.dataset.edit)));
-  });
-  list.querySelectorAll('[data-del]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id = Number(btn.dataset.del);
-      const p = PRODUCTS.find(x=>x.id===id);
-      if(confirm(`Hapus "${p.name}" dari toko?`)){
-        PRODUCTS = PRODUCTS.filter(x=>x.id!==id);
-        saveCustomProducts();
-        renderAdminProductList();
-        renderGrid();
-        showToast("Produk dihapus");
-      }
-    });
-  });
-}
-
-// ============================================================
-// MODAL EDIT PRODUK
-// ============================================================
-let editPhotoUrls = [];
-let editSelectedEmoji = EMOJI_OPTIONS[0];
-
+// ---- MODAL EDIT ----
 function openEditModal(id){
-  const p = PRODUCTS.find(x=>x.id===id);
-  if(!p) return;
-  editingId = id;
-  editPhotoUrls = (p.images||[]).filter(img=>img.url).map(img=>img.url);
-  editSelectedEmoji = p.emoji || EMOJI_OPTIONS[0];
+  const p = PRODUCTS.find(x => x.id === id);
+  editingProductId = id;
+  editSelectedEmoji = p.emoji;
+  editPhotoUrls = (p.images||[]).filter(img => img.url).map(img => img.url);
 
-  const modal = document.getElementById('editModal');
-  modal.querySelector('#e-name').value = p.name;
-  modal.querySelector('#e-seller').value = p.seller;
-  modal.querySelector('#e-desc').value = p.desc || '';
-  modal.querySelector('#e-downloads').value = p.downloads || '0';
-  modal.querySelector('#e-rating').value = p.rating || 0;
-  modal.querySelector('#e-color').value = p.bg || '#233047';
-  modal.querySelector('#e-featured').checked = p.featured || false;
-
-  const isFree = p.price === 0;
-  modal.querySelector('#e-free').checked = isFree;
-  modal.querySelector('#e-price').value = isFree ? 0 : p.price;
-  modal.querySelector('#e-price').disabled = isFree;
-
-  // category
-  const catSel = modal.querySelector('#e-category');
-  catSel.innerHTML = CATEGORIES.filter(c=>c!=="Semua" && c!=="Pilihan")
-    .map(c=>`<option value="${c}" ${c===p.category?'selected':''}>${c}</option>`).join('');
+  document.getElementById('e-name').value = p.name;
+  document.getElementById('e-seller').value = p.seller;
+  document.getElementById('e-category').value = p.category;
+  document.getElementById('e-price').value = p.price;
+  document.getElementById('e-free').checked = p.price === 0;
+  document.getElementById('e-price').disabled = p.price === 0;
+  document.getElementById('e-rating').value = p.rating;
+  document.getElementById('e-downloads').value = p.downloads;
+  document.getElementById('e-color').value = p.bg;
+  document.getElementById('e-featured').checked = p.featured;
+  document.getElementById('e-desc').value = p.desc || '';
 
   renderEditEmojiPicker();
   renderEditPhotoInputs();
 
-  modal.classList.add('show');
+  document.getElementById('editModal').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeEditModal(){
   document.getElementById('editModal').classList.remove('show');
   document.body.style.overflow = '';
-  editingId = null;
+  editingProductId = null;
 }
 
-function renderEditEmojiPicker(){
-  const picker = document.getElementById('e-emojiPicker');
-  picker.innerHTML = EMOJI_OPTIONS.map(em=>
-    `<button type="button" class="emoji-opt ${em===editSelectedEmoji?'selected':''}" data-emoji="${em}">${em}</button>`
-  ).join('');
-  picker.querySelectorAll('.emoji-opt').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ editSelectedEmoji = btn.dataset.emoji; renderEditEmojiPicker(); });
-  });
-}
+document.getElementById('editModalClose').addEventListener('click', closeEditModal);
+document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
 
-function renderEditPhotoInputs(){
-  const container = document.getElementById('e-photoUrlList');
-  container.innerHTML = buildPhotoInputsHTML(editPhotoUrls);
-  bindPhotoInputs(container, editPhotoUrls, null);
-}
-
-document.getElementById('e-addPhotoBtn').addEventListener('click', ()=>{
-  if(editPhotoUrls.length >= 8){ showToast("Maksimal 8 foto per produk"); return; }
-  editPhotoUrls.push('');
-  renderEditPhotoInputs();
-});
-
-document.getElementById('e-free').addEventListener('change', (e)=>{
+document.getElementById('e-free').addEventListener('change', (e) => {
   const priceInput = document.getElementById('e-price');
   priceInput.disabled = e.target.checked;
   if(e.target.checked) priceInput.value = 0;
 });
 
-document.getElementById('editModal').addEventListener('click', (e)=>{
-  if(e.target === document.getElementById('editModal')) closeEditModal();
-});
-document.getElementById('editModalClose').addEventListener('click', closeEditModal);
-document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
-
-document.getElementById('editForm').addEventListener('submit', (e)=>{
+document.getElementById('editForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if(editingId === null) return;
-
-  const idx = PRODUCTS.findIndex(x=>x.id===editingId);
-  if(idx === -1) return;
-
-  const isFree = document.getElementById('e-free').checked;
   const name = document.getElementById('e-name').value.trim();
   const seller = document.getElementById('e-seller').value.trim();
-  if(!name || !seller){ showToast("Nama produk & modder wajib diisi"); return; }
+  if(!name || !seller){ showToast("Nama & seller wajib diisi"); return; }
 
+  const isFree = document.getElementById('e-free').checked;
   const validPhotos = editPhotoUrls.filter(url => url.trim() !== '');
   const bgColor = document.getElementById('e-color').value;
   const images = validPhotos.length > 0
     ? validPhotos.map(url => ({ url, bg: "#111" }))
     : [{ emoji: editSelectedEmoji, bg: bgColor }];
 
-  PRODUCTS[idx] = {
-    ...PRODUCTS[idx],
-    name,
-    seller,
+  const updated = {
+    name, seller,
     category: document.getElementById('e-category').value,
     price: isFree ? 0 : Math.max(0, Number(document.getElementById('e-price').value) || 0),
     rating: Math.min(5, Math.max(0, Number(document.getElementById('e-rating').value) || 0)),
@@ -294,54 +279,19 @@ document.getElementById('editForm').addEventListener('submit', (e)=>{
     desc: document.getElementById('e-desc').value.trim() || "Belum ada deskripsi.",
   };
 
-  saveCustomProducts();
-  renderAdminProductList();
-  renderGrid();
-  closeEditModal();
-  showToast("Produk berhasil diperbarui ✓");
+  showToast("Menyimpan perubahan...");
+  const result = await updateProduct(editingProductId, updated);
+  if(result){
+    const idx = PRODUCTS.findIndex(x => x.id === editingProductId);
+    if(idx !== -1) PRODUCTS[idx] = result;
+    renderAdminProductList();
+    renderGrid();
+    closeEditModal();
+    showToast("Perubahan disimpan ✓");
+  } else {
+    showToast("Gagal menyimpan, coba lagi");
+  }
 });
 
-// ============================================================
-// EXPORT / IMPORT
-// ============================================================
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const custom = PRODUCTS.filter(p=>!p.builtIn);
-  if(custom.length===0){ showToast("Belum ada produk untuk di-export"); return; }
-  const blob = new Blob([JSON.stringify(custom, null, 2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = "garasimod-produk.json"; a.click();
-  URL.revokeObjectURL(url);
-  showToast("Data produk berhasil di-export");
-});
-
-document.getElementById('importInput').addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    try{
-      const imported = JSON.parse(ev.target.result);
-      if(!Array.isArray(imported)) throw new Error("Format tidak valid");
-      const existingIds = new Set(PRODUCTS.map(p=>p.id));
-      imported.forEach(p=>{
-        if(existingIds.has(p.id)) p.id = Date.now() + Math.floor(Math.random()*1000);
-        p.builtIn = false;
-        PRODUCTS.push(p);
-      });
-      saveCustomProducts();
-      renderAdminProductList();
-      renderGrid();
-      showToast(`${imported.length} produk berhasil di-import`);
-    }catch(err){
-      showToast("File tidak valid, gagal import");
-    }
-    e.target.value = "";
-  };
-  reader.readAsText(file);
-});
-
-// ============================================================
-// INIT
-// ============================================================
+// ---- INIT ----
 renderPhotoInputs();
