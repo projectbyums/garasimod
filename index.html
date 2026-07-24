@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garasi Mod — Marketplace Mod BUSSID</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo"><span class="mark">GM</span> Garasi Mod</div>
+    <div class="search-wrap" id="searchWrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Cari livery, mod bus, mod suara...">
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn search-toggle-mobile" id="searchToggle" aria-label="Cari">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="icon-btn" id="wishToggleBtn" aria-label="Favorit">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        <span class="badge" id="wishBadge" style="display:none;">0</span>
+      </button>
+      <button class="icon-btn" id="cartBtn" aria-label="Keranjang">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+        <span class="badge" id="cartBadge" style="display:none;">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Marketplace mod BUSSID</div>
+      <h1>Upgrade garasimu <em>tanpa ribet cari-cari.</em></h1>
+      <p>Livery HD, mod kendaraan, mod suara knalpot, sampai mod map — semua dari modder terverifikasi, siap pasang di Bus Simulator Indonesia kamu.</p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="document.getElementById('produk').scrollIntoView({behavior:'smooth'})">Jelajahi Mod</button>
+        <a href="#produk" class="btn-ghost" onclick="setCategory('Pilihan'); return false;">Mod Trending</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong>860+</strong><span>Modder aktif</span></div>
+        <div><strong>5.200+</strong><span>Mod tersedia</span></div>
+        <div><strong>210K+</strong><span>Total unduhan</span></div>
+      </div>
+    </div>
+    <div class="cluster-wrap">
+      <div class="cluster">
+        <div class="cluster-inner">
+          <span class="big">70%</span>
+          <span class="small">Mod Terverifikasi</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="road-divider"></div>
+
+<nav class="category-bar" id="categoryBar"></nav>
+
+<main class="section" id="produk">
+  <div class="section-head">
+    <h2 id="sectionTitle">Semua Mod</h2>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <strong>Garasi Mod</strong>
+  <p style="margin-top:8px;">Rumah para modder BUSSID Indonesia — livery, mod kendaraan, sound, dan lebih banyak lagi.</p>
+  <p style="margin-top:14px; opacity:0.6;">Bukan produk resmi Maleo / Bus Simulator Indonesia &middot; dibuat untuk demonstrasi</p>
+  <p style="margin-top:16px;"><a href="#admin" id="adminLink" style="text-decoration:underline; opacity:0.6;">Kelola Produk (Admin)</a></p>
+</footer>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="drawer" id="drawer" aria-label="Keranjang belanja">
+  <div class="drawer-head">
+    <h2>Keranjang</h2>
+    <button class="icon-btn" id="closeDrawer" aria-label="Tutup keranjang">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-foot">
+    <div class="total-row"><span>Total</span><strong id="cartTotal">Rp0</strong></div>
+    <button class="checkout-btn" id="checkoutBtn">Checkout via WhatsApp</button>
+  </div>
+</aside>
+
+<div class="modal" id="modal">
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+
+
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-head">
+    <h2>Dashboard Admin — Garasi Mod</h2>
+    <a href="#" id="adminBack" class="admin-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Kembali ke Toko
+    </a>
+  </div>
+  <div class="admin-body">
+
+    <div class="admin-section">
+      <h3>➕ Tambah Produk Baru</h3>
+      <p class="hint">Isi detail mod di bawah ini, lalu klik "Simpan Produk". Produk langsung tampil di halaman toko pada browser ini.</p>
+      <form id="productForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-name">Nama Produk</label>
+            <input type="text" id="f-name" required placeholder="Contoh: Livery SHD Scania Euro 6">
+          </div>
+          <div class="field">
+            <label for="f-seller">Nama Modder / Toko</label>
+            <input type="text" id="f-seller" required placeholder="Contoh: Rizq Livery Studio">
+          </div>
+          <div class="field">
+            <label for="f-category">Kategori</label>
+            <select id="f-category" required></select>
+          </div>
+          <div class="field">
+            <label for="f-price">Harga (Rp)</label>
+            <input type="number" id="f-price" min="0" step="1000" value="0" placeholder="0">
+            <div class="field-inline">
+              <input type="checkbox" id="f-free">
+              <label for="f-free">Gratis (harga otomatis Rp0)</label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-rating">Rating (0 – 5)</label>
+            <input type="number" id="f-rating" min="0" max="5" step="0.1" value="4.5">
+          </div>
+          <div class="field">
+            <label for="f-downloads">Jumlah Unduhan</label>
+            <input type="text" id="f-downloads" placeholder="Contoh: 1.2K atau 350">
+          </div>
+          <div class="field full">
+            <label>Ikon Produk</label>
+            <div class="emoji-picker" id="emojiPicker"></div>
+          </div>
+          <div class="field">
+            <label for="f-color">Warna Latar Kartu</label>
+            <input type="color" id="f-color" value="#233047">
+          </div>
+          <div class="field">
+            <label style="margin-bottom:6px;">&nbsp;</label>
+            <div class="field-inline" style="margin-top:12px;">
+              <input type="checkbox" id="f-featured">
+              <label for="f-featured">Tandai sebagai "Trending"</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="f-desc">Deskripsi Produk</label>
+            <textarea id="f-desc" placeholder="Jelaskan detail mod ini, kompatibilitas, fitur khusus, dll."></textarea>
+          </div>
+        </div>
+        <!-- ===== SEKSI FOTO GALERI ===== -->
+        <div class="photo-section-head">
+          <h4>Foto Produk (Opsional)</h4>
+          <span class="photo-count-hint">Maks. 8 foto · URL gambar publik</span>
+        </div>
+        <div id="photoUrlList">
+          <!-- diisi oleh admin.js -->
+        </div>
+        <div id="photoEmptyHint" class="photo-empty-hint" style="display:none;">
+          Belum ada foto. Klik "+ Tambah Foto" untuk menambahkan URL gambar.<br>
+          Foto akan tampil sebagai galeri saat produk diklik di toko.
+        </div>
+        <button type="button" id="addPhotoBtn" class="add-photo-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Tambah Foto
+        </button>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Simpan Produk</button>
+          <button type="reset" class="btn-secondary">Bersihkan Form</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-section">
+      <h3>📦 Semua Produk (<span id="totalProdukCount">0</span>)</h3>
+      <p class="hint">Produk "Bawaan" adalah contoh produk dari template dan tidak bisa dihapus. Produk "Kamu Tambahkan" bisa dihapus kapan saja.</p>
+      <div class="admin-list" id="adminProductList"></div>
+    </div>
+
+    <div class="admin-section">
+      <h3>💾 Cadangkan / Pindahkan Data</h3>
+      <p class="hint">Saat pindah ke hosting lain, data produk di browser ini tidak ikut pindah otomatis. Export dulu di sini, lalu Import file-nya di alamat hosting yang baru.</p>
+      <div class="import-export-row">
+        <button class="btn-secondary" id="exportBtn">⬇️ Export Data Produk</button>
+        <label class="btn-secondary" style="cursor:pointer;">
+          ⬆️ Import Data Produk
+          <input type="file" id="importInput" accept="application/json" style="display:none;">
+        </label>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Urutan pemuatan penting: storage.js dulu (data produk),
+     lalu app.js (katalog toko), admin.js (dashboard),
+     dan terakhir auth.js (gerbang + routing admin) -->
+<script src="js/storage.js"></script>
+<!-- ===== MODAL EDIT PRODUK ===== -->
+<div class="edit-modal-overlay" id="editModal">
+  <div class="edit-modal-card">
+    <div class="edit-modal-head">
+      <h3>Edit Produk</h3>
+      <button class="modal-close" id="editModalClose" aria-label="Tutup">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="edit-modal-body">
+      <form id="editForm">
+        <div class="form-grid">
+
+          <!-- Nama & Seller -->
+          <div class="field full">
+            <label for="e-name">Nama Produk</label>
+            <input type="text" id="e-name" placeholder="Nama mod / produk" required>
+          </div>
+          <div class="field full">
+            <label for="e-seller">Nama Modder / Seller</label>
+            <input type="text" id="e-seller" placeholder="Studio atau nama kamu" required>
+          </div>
+
+          <!-- Kategori & Harga -->
+          <div class="field">
+            <label for="e-category">Kategori</label>
+            <select id="e-category"></select>
+          </div>
+          <div class="field">
+            <label for="e-price">Harga (Rp)</label>
+            <input type="number" id="e-price" min="0" step="1000" placeholder="0">
+            <label class="inline-check" style="margin-top:8px;">
+              <input type="checkbox" id="e-free"> Gratis
+            </label>
+          </div>
+
+          <!-- Rating & Unduhan -->
+          <div class="field">
+            <label for="e-rating">Rating (0–5)</label>
+            <input type="number" id="e-rating" min="0" max="5" step="0.1" placeholder="4.5">
+          </div>
+          <div class="field">
+            <label for="e-downloads">Jumlah Unduhan</label>
+            <input type="text" id="e-downloads" placeholder="12K">
+          </div>
+
+          <!-- Warna & Featured -->
+          <div class="field">
+            <label for="e-color">Warna Latar Kartu</label>
+            <input type="color" id="e-color" value="#233047">
+          </div>
+          <div class="field" style="display:flex; align-items:flex-end; padding-bottom:4px;">
+            <label class="inline-check">
+              <input type="checkbox" id="e-featured"> Tandai sebagai "Trending"
+            </label>
+          </div>
+
+          <!-- Emoji -->
+          <div class="field full">
+            <label>Ikon Fallback (tampil jika belum ada foto)</label>
+            <div class="emoji-picker" id="e-emojiPicker"></div>
+          </div>
+
+          <!-- Deskripsi -->
+          <div class="field full">
+            <label for="e-desc">Deskripsi Produk</label>
+            <textarea id="e-desc" rows="3" placeholder="Jelaskan detail mod ini..."></textarea>
+          </div>
+
+          <!-- Foto -->
+          <div class="field full">
+            <div class="photo-section-head">
+              <h4>Foto Produk</h4>
+              <span class="photo-count-hint">Maks. 8 foto · URL gambar publik</span>
+            </div>
+            <div id="e-photoUrlList"></div>
+            <button type="button" id="e-addPhotoBtn" class="add-photo-btn" style="margin-top:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Tambah Foto
+            </button>
+          </div>
+
+        </div>
+
+        <div class="form-actions" style="margin-top:24px;">
+          <button type="submit" class="btn-primary">Simpan Perubahan</button>
+          <button type="button" class="btn-secondary" id="editCancelBtn">Batal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
